@@ -29,7 +29,7 @@ type Primitive = string | number | boolean | null;
 
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
 
-export type ProviderName = 'openrouter' | 'ollama' | 'llamacpp' | 'openai' | 'mlx' | 'llmgateway' | 'azure' | 'zai';
+export type ProviderName = 'openrouter' | 'ollama' | 'llamacpp' | 'openai' | 'copilot' | 'mlx' | 'llmgateway' | 'azure' | 'zai';
 
 export type AzureAuthMethod = 'api-key' | 'entra-id' | 'managed-identity';
 export type OpenAIAuthMode = 'api-key' | 'chatgpt';
@@ -50,6 +50,10 @@ export interface OpenRouterSettings extends ProviderSettings {
 }
 
 export interface LLMGatewaySettings extends ProviderSettings {
+  apiKey: string;
+}
+
+export interface CopilotSettings extends ProviderSettings {
   apiKey: string;
 }
 
@@ -556,6 +560,7 @@ export interface AutohandConfig {
   ollama?: ProviderSettings;
   llamacpp?: ProviderSettings;
   openai?: OpenAISettings;
+  copilot?: CopilotSettings;
   mlx?: ProviderSettings;
   llmgateway?: LLMGatewaySettings;
   /** Azure OpenAI settings */

@@ -9,6 +9,19 @@ import type { AutohandConfig } from "../../src/types.js";
 
 describe("ProviderFactory", () => {
   describe("create", () => {
+    it("should create CopilotProvider when copilot is configured", () => {
+      const config: AutohandConfig = {
+        provider: "copilot",
+        copilot: {
+          apiKey: "copilot-token",
+          model: "claude-sonnet-4.5",
+        },
+      };
+
+      const provider = ProviderFactory.create(config);
+      expect(provider.getName()).toBe("copilot");
+    });
+
     it("should create LLMGatewayProvider when llmgateway is configured", () => {
       const config: AutohandConfig = {
         provider: "llmgateway",
@@ -45,6 +58,11 @@ describe("ProviderFactory", () => {
   });
 
   describe("getProviderNames", () => {
+    it("should include copilot in the list", () => {
+      const providers = ProviderFactory.getProviderNames();
+      expect(providers).toContain("copilot");
+    });
+
     it("should include llmgateway in the list", () => {
       const providers = ProviderFactory.getProviderNames();
       expect(providers).toContain("llmgateway");
@@ -57,6 +75,10 @@ describe("ProviderFactory", () => {
   });
 
   describe("isValidProvider", () => {
+    it("should return true for copilot", () => {
+      expect(ProviderFactory.isValidProvider("copilot")).toBe(true);
+    });
+
     it("should return true for llmgateway", () => {
       expect(ProviderFactory.isValidProvider("llmgateway")).toBe(true);
     });

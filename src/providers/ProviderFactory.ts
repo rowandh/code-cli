@@ -8,6 +8,7 @@ import type { LLMProvider } from './LLMProvider.js';
 import type { LLMRequest, LLMResponse } from '../types.js';
 import { OllamaProvider } from './OllamaProvider.js';
 import { OpenAIProvider } from './OpenAIProvider.js';
+import { CopilotProvider } from './CopilotProvider.js';
 import { LlamaCppProvider } from './LlamaCppProvider.js';
 import { OpenRouterProvider } from './OpenRouterProvider.js';
 import { MLXProvider } from './MLXProvider.js';
@@ -77,6 +78,12 @@ export class ProviderFactory {
                 }
                 return new OpenAIProvider(config.openai);
 
+            case 'copilot':
+                if (!config.copilot) {
+                    return new UnconfiguredProvider('copilot');
+                }
+                return new CopilotProvider(config.copilot, config.network);
+
             case 'llamacpp':
                 if (!config.llamacpp) {
                     return new UnconfiguredProvider('llamacpp');
@@ -121,7 +128,7 @@ export class ProviderFactory {
      * MLX is only included on Apple Silicon (macOS + arm64).
      */
     static getProviderNames(): ProviderName[] {
-        const providers: ProviderName[] = ['openrouter', 'ollama', 'openai', 'llamacpp', 'llmgateway', 'azure', 'zai'];
+        const providers: ProviderName[] = ['openrouter', 'ollama', 'openai', 'copilot', 'llamacpp', 'llmgateway', 'azure', 'zai'];
         if (isMLXSupported()) {
             providers.push('mlx');
         }
@@ -134,7 +141,7 @@ export class ProviderFactory {
      * MLX is always a valid provider name, but may not be available on non-Apple Silicon systems.
      */
     static isValidProvider(name: string): name is ProviderName {
-        const allProviders: ProviderName[] = ['openrouter', 'ollama', 'openai', 'llamacpp', 'mlx', 'llmgateway', 'azure', 'zai'];
+        const allProviders: ProviderName[] = ['openrouter', 'ollama', 'openai', 'copilot', 'llamacpp', 'mlx', 'llmgateway', 'azure', 'zai'];
         return allProviders.includes(name as ProviderName);
     }
 }

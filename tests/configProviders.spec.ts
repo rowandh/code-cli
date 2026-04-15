@@ -56,6 +56,29 @@ describe('getProviderConfig', () => {
     expect(result!.apiKey).toBe('lg-test-key');
   });
 
+  it('returns copilot settings when configured', () => {
+    const cfg: AutohandConfig = {
+      provider: 'copilot',
+      copilot: { apiKey: 'copilot-token', model: 'claude-sonnet-4.5' }
+    };
+
+    const result = getProviderConfig(cfg);
+    expect(result).not.toBeNull();
+    expect(result!.baseUrl).toBe('http://localhost:4141/v1');
+    expect(result!.model).toBe('claude-sonnet-4.5');
+    expect(result!.apiKey).toBe('copilot-token');
+  });
+
+  it('returns null when copilot config has no api key', () => {
+    const cfg: AutohandConfig = {
+      provider: 'copilot',
+      copilot: { apiKey: '', model: 'claude-sonnet-4.5' }
+    };
+
+    const result = getProviderConfig(cfg);
+    expect(result).toBeNull();
+  });
+
   it('returns default base url for llmgateway when missing', () => {
     const cfg: AutohandConfig = {
       provider: 'llmgateway',

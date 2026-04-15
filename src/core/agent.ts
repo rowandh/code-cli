@@ -6346,6 +6346,7 @@ If lint or tests fail, report the issues but do NOT commit.`;
     if (this.runtime.config.ollama) providers.push('ollama');
     if (this.runtime.config.llamacpp) providers.push('llamacpp');
     if (this.runtime.config.openai) providers.push('openai');
+    if (this.runtime.config.copilot) providers.push('copilot');
     if (this.runtime.config.mlx) providers.push('mlx');
     if (this.runtime.config.llmgateway) providers.push('llmgateway');
     if (this.runtime.config.zai) providers.push('zai');

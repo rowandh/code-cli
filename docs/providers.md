@@ -9,6 +9,7 @@ Autohand supports multiple LLM providers, giving you flexibility to choose betwe
 - [Cloud Providers](#cloud-providers)
   - [OpenRouter](#openrouter)
   - [OpenAI](#openai)
+  - [GitHub Copilot](#github-copilot)
   - [LLM Gateway](#llm-gateway)
   - [Z.ai](#zai)
 - [Local Providers](#local-providers)
@@ -48,6 +49,7 @@ EOF
 | --------------- | ----- | ----------- | ------- | ----------------------------------------------- |
 | **OpenRouter**  | Cloud | Pay-per-use | Low     | Access to 100+ models, recommended default      |
 | **OpenAI**      | Cloud | Pay-per-use | Low     | Direct OpenAI access, GPT-4o, o1 models         |
+| **GitHub Copilot** | Proxy | Existing Copilot plan | Medium  | Using Copilot through a local OpenAI-compatible proxy |
 | **LLM Gateway** | Cloud | Pay-per-use | Low     | Unified API for multiple providers              |
 | **Z.ai**        | Cloud | Pay-per-use | Low     | GLM-4.5 series models, CogView image generation |
 | **Ollama**      | Local | Free        | Medium  | Privacy-focused, offline work                   |
@@ -136,6 +138,35 @@ Or use ChatGPT auth:
 | `gpt-4-turbo` | Previous generation flagship |
 | `o1-preview` | Advanced reasoning model |
 | `o1-mini` | Faster reasoning model |
+
+---
+
+### GitHub Copilot
+
+Autohand can talk to GitHub Copilot through a local OpenAI-compatible proxy such as [yuegongzi/copilot-api](https://github.com/yuegongzi/copilot-api). This keeps Copilot-specific auth and device login outside the CLI while still fitting Autohand's existing provider architecture.
+
+**Setup:**
+
+1. Run a local Copilot proxy such as `copilot-api`
+2. Add your GitHub account in the proxy's admin UI
+3. Copy the proxy token and configure Autohand:
+
+```json
+{
+  "provider": "copilot",
+  "copilot": {
+    "apiKey": "token-from-your-local-proxy",
+    "baseUrl": "http://localhost:4141/v1",
+    "model": "claude-sonnet-4.5"
+  }
+}
+```
+
+**Notes:**
+
+- The default `baseUrl` assumes the proxy is running locally on port `4141`
+- `model` should match a model ID or alias exposed by your proxy
+- The proxy is a third-party reverse-engineered integration, so treat it as best-effort and expect upstream changes
 
 ---
 

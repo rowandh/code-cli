@@ -14,6 +14,7 @@ import { join } from 'path';
 import type { AutohandConfig, LoadedConfig, ProviderName, AzureSettings, AzureAuthMethod, PermissionMode, SearchProvider, ReasoningEffort, OpenAIAuthMode, OpenAIChatGPTAuth, OpenAISettings } from '../types.js';
 import { getProviderConfig } from '../config.js';
 import { ProviderFactory } from '../providers/ProviderFactory.js';
+import { COPILOT_DEFAULT_BASE_URL } from '../providers/CopilotProvider.js';
 import { ZAI_MODELS, ZAI_DEFAULT_BASE_URL } from '../providers/ZaiProvider.js';
 import { authenticateOpenAIChatGPT, isChatGPTAuthExpired } from '../providers/openaiAuth.js';
 import { installLlamaCpp, probeLlamaCppEnvironment } from '../providers/llamaCppSetup.js';
@@ -1648,7 +1649,7 @@ export class SetupWizard {
   // Helper methods
 
   private requiresApiKey(provider: ProviderName): boolean {
-    return provider === 'openrouter' || provider === 'llmgateway' || provider === 'zai';
+    return provider === 'openrouter' || provider === 'copilot' || provider === 'llmgateway' || provider === 'zai';
   }
 
   private getProviderDisplayName(provider: ProviderName): string {
@@ -1663,6 +1664,7 @@ export class SetupWizard {
     const urls: Record<string, string> = {
       openrouter: t('providers.wizard.openrouter.apiKeyUrl'),
       openai: t('providers.wizard.openai.apiKeyUrl'),
+      copilot: t('providers.wizard.copilot.apiKeyUrl'),
       llmgateway: t('providers.wizard.llmgateway.apiKeyUrl'),
       zai: t('providers.wizard.zai.apiKeyUrl')
     };
@@ -1673,6 +1675,7 @@ export class SetupWizard {
     const defaults: Record<ProviderName, string> = {
       openrouter: 'nvidia/nemotron-3-super-120b-a12b:free',
       openai: 'gpt-5.4',
+      copilot: 'claude-sonnet-4.5',
       ollama: 'llama3.2:latest',
       llamacpp: 'local',
       mlx: 'mlx-community/Llama-3.2-3B-Instruct-4bit',
@@ -1687,6 +1690,7 @@ export class SetupWizard {
     const urls: Record<ProviderName, string> = {
       openrouter: 'https://openrouter.ai/api/v1',
       openai: 'https://api.openai.com/v1',
+      copilot: COPILOT_DEFAULT_BASE_URL,
       ollama: 'http://localhost:11434',
       llamacpp: 'http://localhost:8080',
       mlx: 'http://localhost:8080',

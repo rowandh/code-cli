@@ -488,6 +488,29 @@ describe("SetupWizard", () => {
         }),
       );
     });
+
+    it("should support copilot in onboarding with proxy defaults", async () => {
+      const wizard = new SetupWizard(testWorkspace);
+      setupCloudProviderMocks(
+        "copilot",
+        "copilot-token-long-enough",
+        "claude-sonnet-4.5",
+      );
+
+      const result = await wizard.run({ skipWelcome: true });
+
+      expect(result.success).toBe(true);
+      expect(result.config.provider).toBe("copilot");
+      expect(result.config.copilot?.apiKey).toBe("copilot-token-long-enough");
+      expect(result.config.copilot?.model).toBe("claude-sonnet-4.5");
+      expect(result.config.copilot?.baseUrl).toBe("http://localhost:4141/v1");
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:4141/v1/models",
+        expect.objectContaining({
+          headers: { Authorization: "Bearer copilot-token-long-enough" },
+        }),
+      );
+    });
   });
 
   describe("API Key Handling", () => {
@@ -511,6 +534,19 @@ describe("SetupWizard", () => {
       const result = await wizard.run({ skipWelcome: true });
 
       expect(result.config.openai?.apiKey).toBe("sk-openai-test-key");
+    });
+
+    it("should save API key for Copilot", async () => {
+      const wizard = new SetupWizard(testWorkspace);
+      setupCloudProviderMocks(
+        "copilot",
+        "copilot-token-long-enough",
+        "claude-sonnet-4.5",
+      );
+
+      const result = await wizard.run({ skipWelcome: true });
+
+      expect(result.config.copilot?.apiKey).toBe("copilot-token-long-enough");
     });
 
     it("should offer to use existing API key", async () => {
@@ -891,6 +927,24 @@ describe("SetupWizard", () => {
         "https://openrouter.ai/api/v1/models",
         expect.objectContaining({
           headers: { Authorization: "Bearer sk-valid-key-long" },
+        }),
+      );
+    });
+
+    it("should validate copilot token via the local proxy /models endpoint", async () => {
+      const wizard = new SetupWizard(testWorkspace);
+      setupCloudProviderMocks(
+        "copilot",
+        "copilot-token-long-enough",
+        "claude-sonnet-4.5",
+      );
+
+      await wizard.run({ skipWelcome: true });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:4141/v1/models",
+        expect.objectContaining({
+          headers: { Authorization: "Bearer copilot-token-long-enough" },
         }),
       );
     });

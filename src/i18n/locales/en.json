@@ -666,6 +666,7 @@
   "providers": {
     "openrouter": "OpenRouter",
     "openai": "OpenAI",
+    "copilot": "GitHub Copilot",
     "ollama": "Ollama",
     "llamacpp": "llama.cpp",
     "mlx": "MLX (Apple Silicon)",
@@ -692,6 +693,7 @@
     "hints": {
       "openrouter": "Cloud - Access to 100+ models (Claude, GPT-4, etc.)",
       "openai": "Cloud - Official OpenAI models (GPT-4o, o1, etc.)",
+      "copilot": "Proxy - GitHub Copilot via a local OpenAI-compatible proxy",
       "ollama": "Local - Run models on your machine (free)",
       "llamacpp": "Local - Fast inference with GGUF models",
       "mlx": "Local - Optimized for Apple Silicon Macs",
@@ -754,6 +756,10 @@
       "openai": {
         "title": "OpenAI Configuration",
         "apiKeyUrl": "https://platform.openai.com/api-keys"
+      },
+      "copilot": {
+        "title": "GitHub Copilot Configuration",
+        "apiKeyUrl": "https://github.com/yuegongzi/copilot-api"
       },
       "ollama": {
         "title": "Ollama Configuration",

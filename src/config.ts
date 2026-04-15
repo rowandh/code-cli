@@ -12,6 +12,7 @@ import type {
   ProviderName,
   ProviderSettings,
   AzureSettings,
+  CopilotSettings,
   OpenAISettings,
 } from "./types.js";
 import { AUTOHAND_FILES } from "./constants.js";
@@ -24,6 +25,7 @@ const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 const DEFAULT_LLAMACPP_URL = "http://localhost:8080";
 const DEFAULT_OPENAI_URL = "https://api.openai.com/v1";
+const DEFAULT_COPILOT_URL = "http://localhost:4141/v1";
 const DEFAULT_MLX_URL = "http://localhost:8080";
 const DEFAULT_LLMGATEWAY_URL = "https://api.llmgateway.io/v1";
 const DEFAULT_ZAI_URL = "https://api.z.ai/api/paas/v4";
@@ -293,6 +295,7 @@ function isModernConfig(
     typeof (config as AutohandConfig).ollama === "object" ||
     typeof (config as AutohandConfig).llamacpp === "object" ||
     typeof (config as AutohandConfig).openai === "object" ||
+    typeof (config as AutohandConfig).copilot === "object" ||
     typeof (config as AutohandConfig).mlx === "object" ||
     typeof (config as AutohandConfig).azure === "object" ||
     typeof (config as AutohandConfig).zai === "object"
@@ -444,6 +447,7 @@ export function getProviderConfig(
     ollama: config.ollama,
     llamacpp: config.llamacpp,
     openai: config.openai,
+    copilot: config.copilot,
     mlx: config.mlx,
     llmgateway: config.llmgateway,
     azure: config.azure,
@@ -475,11 +479,12 @@ export function getProviderConfig(
       }
     }
   } else if (
+    chosen === "copilot" ||
     chosen === "openrouter" ||
     chosen === "llmgateway" ||
     chosen === "zai"
   ) {
-    const { apiKey, model } = entry as ProviderSettings;
+    const { apiKey, model } = entry as CopilotSettings;
     if (!apiKey || apiKey === "replace-me" || !model) {
       return null; // Incomplete config
     }
@@ -509,6 +514,7 @@ function defaultBaseUrlFor(
   port?: number,
 ): string | undefined {
   if (provider === "openrouter") return DEFAULT_BASE_URL;
+  if (provider === "copilot") return DEFAULT_COPILOT_URL;
   if (provider === "llmgateway") return DEFAULT_LLMGATEWAY_URL;
   if (provider === "zai") return DEFAULT_ZAI_URL;
   const p = port ? port.toString() : undefined;

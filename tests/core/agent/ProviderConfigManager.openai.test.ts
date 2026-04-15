@@ -42,6 +42,7 @@ vi.mock("../../../src/i18n/index.js", () => ({
       "providers.llmgateway": "LLM Gateway",
       "providers.openrouter": "OpenRouter",
       "providers.openai": "OpenAI",
+      "providers.copilot": "GitHub Copilot",
       "providers.ollama": "Ollama",
       "providers.azure": "Azure OpenAI",
       "providers.config.hosted": "hosted",
@@ -177,6 +178,21 @@ describe("ProviderConfigManager openai auth mode", () => {
     expect(mockSaveConfig).toHaveBeenCalledOnce();
   });
 
+  it("configures copilot with proxy defaults", async () => {
+    mockShowPassword.mockResolvedValueOnce("copilot-token");
+    mockShowInput.mockResolvedValueOnce("claude-sonnet-4.5");
+
+    await (manager as any).configureCopilot();
+
+    expect(runtime.config.copilot).toEqual({
+      apiKey: "copilot-token",
+      baseUrl: "http://localhost:4141/v1",
+      model: "claude-sonnet-4.5",
+    });
+    expect(runtime.config.provider).toBe("copilot");
+    expect(mockSaveConfig).toHaveBeenCalledOnce();
+  });
+
   it("shows user-facing provider names in provider selection", async () => {
     runtime.config.provider = "zai";
     runtime.config.zai = {
@@ -192,5 +208,6 @@ describe("ProviderConfigManager openai auth mode", () => {
     const options = mockShowModal.mock.calls[0][0].options;
     expect(options.some((option: { label: string }) => option.label.includes("Z.ai"))).toBe(true);
     expect(options.some((option: { label: string }) => option.label.includes("LLM Gateway"))).toBe(true);
+    expect(options.some((option: { label: string }) => option.label.includes("GitHub Copilot"))).toBe(true);
   });
 });

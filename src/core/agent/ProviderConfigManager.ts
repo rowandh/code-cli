@@ -19,6 +19,7 @@ import {
   installLlamaCpp,
   probeLlamaCppEnvironment,
 } from "../../providers/llamaCppSetup.js";
+import { COPILOT_DEFAULT_BASE_URL } from "../../providers/CopilotProvider.js";
 import { ZAI_MODELS, ZAI_DEFAULT_BASE_URL } from "../../providers/ZaiProvider.js";
 import { sanitizeModelId } from "../../providers/errors.js";
 import { saveConfig, getProviderConfig } from "../../config.js";
@@ -164,6 +165,7 @@ export class ProviderConfigManager {
     }
 
     if (
+      provider === "copilot" ||
       provider === "openrouter" ||
       provider === "llmgateway" ||
       provider === "zai"
@@ -191,6 +193,9 @@ export class ProviderConfigManager {
         break;
       case "openai":
         await this.configureOpenAI();
+        break;
+      case "copilot":
+        await this.configureCopilot();
         break;
       case "mlx":
         await this.configureMLX();
@@ -712,6 +717,66 @@ export class ProviderConfigManager {
   }
 
   /**
+   * Configure GitHub Copilot provider via a local OpenAI-compatible proxy.
+   */
+  private async configureCopilot(): Promise<void> {
+    try {
+      console.log(chalk.cyan(t("providers.wizard.copilot.title")));
+      console.log(
+        chalk.gray(
+          t("providers.config.apiKeyUrl", {
+            url: t("providers.wizard.copilot.apiKeyUrl"),
+          }) + "\n",
+        ),
+      );
+
+      const apiKey = await showPassword({
+        title: t("providers.config.enterApiKey", {
+          provider: t("providers.copilot"),
+        }),
+        placeholder: t("ui.apiKeyPlaceholder"),
+      });
+
+      if (!apiKey) {
+        console.log(chalk.gray("\n" + t("providers.config.cancelled")));
+        return;
+      }
+
+      const model = await showInput({
+        title: t("providers.config.enterModelId"),
+        defaultValue: "claude-sonnet-4.5",
+      });
+
+      if (!model) {
+        console.log(chalk.gray("\n" + t("providers.config.cancelled")));
+        return;
+      }
+
+      this.runtime.config.copilot = {
+        apiKey,
+        baseUrl: COPILOT_DEFAULT_BASE_URL,
+        model: sanitizeModelId(model),
+      };
+
+      this.runtime.config.provider = "copilot";
+      this.runtime.options.model = model;
+      await saveConfig(this.runtime.config);
+      this.resetLlmClient("copilot", model);
+
+      console.log(
+        chalk.green(
+          "\n✓ " +
+            t("providers.config.configuredSuccessfully", {
+              provider: t("providers.copilot"),
+            }),
+        ),
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Configure Azure OpenAI provider
    */
   private async configureAzure(): Promise<void> {
@@ -965,9 +1030,10 @@ export class ProviderConfigManager {
       const currentModel =
         this.runtime.options.model ?? currentSettings?.model ?? "";
 
-      // For cloud providers (openai, openrouter, llmgateway, azure, zai), offer to change API key as well
+      // For cloud providers (openai, copilot, openrouter, llmgateway, azure, zai), offer to change API key as well
       if (
         provider === "openai" ||
+        provider === "copilot" ||
         provider === "openrouter" ||
         provider === "llmgateway" ||
         provider === "azure" ||
@@ -1113,7 +1179,13 @@ export class ProviderConfigManager {
   }
 
   private async changeCloudProviderSettings(
-    provider: "openai" | "openrouter" | "llmgateway" | "azure" | "zai",
+    provider:
+      | "openai"
+      | "copilot"
+      | "openrouter"
+      | "llmgateway"
+      | "azure"
+      | "zai",
     currentModel: string,
     currentSettings: {
       apiKey?: string;
@@ -1237,6 +1309,7 @@ export class ProviderConfigManager {
     ) {
       const keyUrlMap = {
         openai: "https://platform.openai.com/api-keys",
+        copilot: "http://localhost:4141/token",
         openrouter: "https://openrouter.ai/keys",
         llmgateway: "https://llmgateway.io/dashboard",
         azure: "https://ai.azure.com",
@@ -1439,6 +1512,7 @@ export class ProviderConfigManager {
           authMode === "chatgpt"
             ? "https://chatgpt.com/backend-api/codex"
             : "https://api.openai.com/v1",
+        copilot: COPILOT_DEFAULT_BASE_URL,
         openrouter: "https://openrouter.ai/api/v1",
         llmgateway: "https://api.llmgateway.io/v1",
         zai: ZAI_DEFAULT_BASE_URL,
@@ -1459,14 +1533,26 @@ export class ProviderConfigManager {
           baseUrl,
           model: newModel,
         };
-      } else {
+      } else if (provider === "copilot") {
+        this.runtime.config.copilot = {
+          apiKey: newApiKey,
+          baseUrl,
+          model: newModel,
+        };
+      } else if (provider === "llmgateway") {
         this.runtime.config.llmgateway = {
           apiKey: newApiKey,
           baseUrl,
           model: newModel,
         };
+      } else {
+        this.runtime.config.zai = {
+          apiKey: newApiKey,
+          baseUrl,
+          model: newModel,
+        };
       }
-    }
+      }
 
     this.runtime.config.provider = provider;
     this.runtime.options.model = newModel;
@@ -1532,7 +1618,13 @@ export class ProviderConfigManager {
    * Validate API key by making a test request to the provider
    */
   private async validateApiKey(
-    provider: "openai" | "openrouter" | "llmgateway" | "azure" | "zai",
+    provider:
+      | "openai"
+      | "copilot"
+      | "openrouter"
+      | "llmgateway"
+      | "azure"
+      | "zai",
     apiKey: string,
   ): Promise<{ valid: boolean; error?: string; hint?: string }> {
     // Azure keys can't be easily validated without resource/deployment info
@@ -1543,6 +1635,7 @@ export class ProviderConfigManager {
     try {
       const baseUrlMap = {
         openai: "https://api.openai.com/v1",
+        copilot: COPILOT_DEFAULT_BASE_URL,
         openrouter: "https://openrouter.ai/api/v1",
         llmgateway: "https://api.llmgateway.io/v1",
         zai: ZAI_DEFAULT_BASE_URL,
@@ -1581,6 +1674,7 @@ export class ProviderConfigManager {
 
       const keyUrlMap = {
         openai: "https://platform.openai.com/api-keys",
+        copilot: "http://localhost:4141/token",
         openrouter: "https://openrouter.ai/keys",
         llmgateway: "https://llmgateway.io/dashboard",
         zai: "https://z.ai/api-keys",
@@ -1699,6 +1793,9 @@ export class ProviderConfigManager {
           apiKey: "",
           model,
         }),
+      copilot:
+        this.runtime.config.copilot ??
+        (this.runtime.config.copilot = { apiKey: "", model }),
       mlx: this.runtime.config.mlx ?? (this.runtime.config.mlx = { model }),
       llmgateway:
         this.runtime.config.llmgateway ??

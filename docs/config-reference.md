@@ -99,6 +99,7 @@ Active LLM provider to use.
 | `"ollama"`     | Local Ollama instance        |
 | `"llamacpp"`   | Local llama.cpp server       |
 | `"openai"`     | OpenAI API directly          |
+| `"copilot"`    | GitHub Copilot via local proxy |
 | `"mlx"`        | MLX on Apple Silicon (local) |
 | `"llmgateway"` | LLM Gateway unified API      |
 
@@ -201,6 +202,26 @@ OpenAI can also use your ChatGPT subscription via Autohand's built-in OpenAI sig
 | `baseUrl`     | string | No                     | `https://api.openai.com/v1` | API endpoint                                    |
 | `model`       | string | Yes                    | -                           | Model name (e.g., `gpt-5.4`, `gpt-5.4-mini`)    |
 | `chatgptAuth` | object | Yes for `chatgpt` mode | -                           | Stored ChatGPT/Codex auth tokens and account id |
+
+### `copilot`
+
+GitHub Copilot proxy configuration. This provider expects a local OpenAI-compatible proxy such as `copilot-api`.
+
+```json
+{
+  "copilot": {
+    "apiKey": "token-from-your-local-proxy",
+    "baseUrl": "http://localhost:4141/v1",
+    "model": "claude-sonnet-4.5"
+  }
+}
+```
+
+| Field     | Type   | Required | Default                  | Description                                          |
+| --------- | ------ | -------- | ------------------------ | ---------------------------------------------------- |
+| `apiKey`  | string | Yes      | -                        | Token exposed by your local Copilot proxy            |
+| `baseUrl` | string | No       | `http://localhost:4141/v1` | Proxy base URL with OpenAI-compatible endpoints    |
+| `model`   | string | Yes      | -                        | Model ID or alias exposed by your proxy              |
 
 ### `mlx`
 

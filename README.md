@@ -358,6 +358,7 @@ Create `~/.autohand/config.json`:
 | OpenRouter | `openrouter` | Access to Claude, GPT-4, Grok, etc. |
 | LLMGateway | `llmgateway` | Direct Claude API access            |
 | OpenAI     | `openai`     | GPT-4 and other models              |
+| Copilot    | `copilot`    | GitHub Copilot via local proxy      |
 | Ollama     | `ollama`     | Local models                        |
 | llama.cpp  | `llamacpp`   | Local inference                     |
 | MLX        | `mlx`        | Apple Silicon optimized             |

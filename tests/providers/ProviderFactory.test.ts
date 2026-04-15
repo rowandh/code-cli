@@ -19,12 +19,13 @@ describe("ProviderFactory", () => {
   });
 
   describe("getProviderNames()", () => {
-    it("should always include openrouter, ollama, openai, llamacpp, llmgateway, azure, zai", () => {
+    it("should always include openrouter, ollama, openai, copilot, llamacpp, llmgateway, azure, zai", () => {
       const providers = ProviderFactory.getProviderNames();
 
       expect(providers).toContain("openrouter");
       expect(providers).toContain("ollama");
       expect(providers).toContain("openai");
+      expect(providers).toContain("copilot");
       expect(providers).toContain("llamacpp");
       expect(providers).toContain("llmgateway");
       expect(providers).toContain("azure");
@@ -48,6 +49,7 @@ describe("ProviderFactory", () => {
         "openrouter",
         "ollama",
         "openai",
+        "copilot",
         "llamacpp",
         "llmgateway",
         "azure",
@@ -83,6 +85,20 @@ describe("ProviderFactory", () => {
       const provider = ProviderFactory.create(config);
 
       expect(provider.getName()).toBe("openai");
+    });
+
+    it("should create CopilotProvider when copilot is configured", () => {
+      const config: AutohandConfig = {
+        provider: "copilot",
+        copilot: {
+          apiKey: "copilot-token",
+          model: "claude-sonnet-4.5",
+        },
+      };
+
+      const provider = ProviderFactory.create(config);
+
+      expect(provider.getName()).toBe("copilot");
     });
 
     it("should create LlamaCppProvider when llamacpp is configured", () => {
@@ -175,6 +191,10 @@ describe("ProviderFactory", () => {
 
     it("should return true for openai", () => {
       expect(ProviderFactory.isValidProvider("openai")).toBe(true);
+    });
+
+    it("should return true for copilot", () => {
+      expect(ProviderFactory.isValidProvider("copilot")).toBe(true);
     });
 
     it("should return true for llamacpp", () => {
