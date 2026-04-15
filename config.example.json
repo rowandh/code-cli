@@ -1,4 +1,5 @@
 {
+  "provider": "openrouter",
   "openrouter": {
     "apiKey": "your-api-key-here",
     "model": "your-modelcard-id-here"

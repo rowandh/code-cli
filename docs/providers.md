@@ -11,6 +11,7 @@ Autohand supports multiple LLM providers, giving you flexibility to choose betwe
   - [OpenAI](#openai)
   - [LLM Gateway](#llm-gateway)
   - [Z.ai](#zai)
+  - [GitHub Copilot](#github-copilot)
 - [Local Providers](#local-providers)
   - [Ollama](#ollama)
   - [llama.cpp](#llamacpp)
@@ -50,6 +51,7 @@ EOF
 | **OpenAI**      | Cloud | Pay-per-use | Low     | Direct OpenAI access, GPT-4o, o1 models         |
 | **LLM Gateway** | Cloud | Pay-per-use | Low     | Unified API for multiple providers              |
 | **Z.ai**        | Cloud | Pay-per-use | Low     | GLM-4.5 series models, CogView image generation |
+| **GitHub Copilot** | Cloud | Subscription | Low | Use your Copilot entitlement through the Copilot SDK |
 | **Ollama**      | Local | Free        | Medium  | Privacy-focused, offline work                   |
 | **llama.cpp**   | Local | Free        | Low     | Performance-focused local inference             |
 | **MLX**         | Local | Free        | Low     | Apple Silicon optimized                         |
@@ -237,6 +239,30 @@ curl -X POST "https://api.z.ai/api/paas/v4/chat/completions" \
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
+
+---
+
+### GitHub Copilot
+
+GitHub Copilot support uses @github/copilot-sdk and your existing Copilot sign-in. By default, Autohand uses the logged-in GitHub user that the SDK can access. The Copilot SDK currently requires Node 20+.
+
+**Setup:**
+
+1. Make sure GitHub Copilot is enabled for your GitHub account.
+2. Sign in anywhere the Copilot SDK can reuse that session, or provide a GitHub token in config.
+3. Configure Autohand:
+
+```json
+{
+  "provider": "github-copilot",
+  "github-copilot": {
+    "model": "claude-sonnet-4.5",
+    "useLoggedInUser": true
+  }
+}
+```
+
+If you prefer explicit auth, add githubToken under github-copilot.
 
 ---
 

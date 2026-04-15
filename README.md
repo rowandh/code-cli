@@ -362,6 +362,7 @@ Create `~/.autohand/config.json`:
 | llama.cpp  | `llamacpp`   | Local inference                     |
 | MLX        | `mlx`        | Apple Silicon optimized             |
 | Z.ai       | `zai`        | High-performance inference          |
+| GitHub Copilot | `github-copilot` | Uses your Copilot subscription via the Copilot SDK (Node 20+) |
 
 ## Session Management
 
