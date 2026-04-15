@@ -115,4 +115,31 @@ describe('getProviderConfig', () => {
     const result = getProviderConfig(cfg);
     expect(result).toBeNull();
   });
+
+  it('returns github-copilot settings when configured for logged-in user auth', () => {
+    const cfg: AutohandConfig = {
+      provider: 'github-copilot',
+      'github-copilot': {
+        model: 'claude-sonnet-4.5',
+      }
+    };
+
+    const result = getProviderConfig(cfg);
+    expect(result).not.toBeNull();
+    expect(result!.model).toBe('claude-sonnet-4.5');
+    expect((result as AutohandConfig['github-copilot'])?.useLoggedInUser).toBe(true);
+  });
+
+  it('returns null when github-copilot disables logged-in user auth without a token', () => {
+    const cfg: AutohandConfig = {
+      provider: 'github-copilot',
+      'github-copilot': {
+        model: 'claude-sonnet-4.5',
+        useLoggedInUser: false,
+      }
+    };
+
+    const result = getProviderConfig(cfg);
+    expect(result).toBeNull();
+  });
 });

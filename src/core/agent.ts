@@ -6349,6 +6349,7 @@ If lint or tests fail, report the issues but do NOT commit.`;
     if (this.runtime.config.mlx) providers.push('mlx');
     if (this.runtime.config.llmgateway) providers.push('llmgateway');
     if (this.runtime.config.zai) providers.push('zai');
+    if (this.runtime.config['github-copilot']) providers.push('github-copilot');
     return providers.length ? providers : ['openrouter'];
   }
 

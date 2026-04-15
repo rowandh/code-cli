@@ -423,6 +423,16 @@ export class AutohandAcpAdapter implements Agent {
       return {};
     }
 
+    if (provider === "github-copilot" && providerConfig?.model) {
+      if (providerConfig.githubToken || providerConfig.useLoggedInUser !== false) {
+        return {};
+      }
+    }
+
+    if (["ollama", "llamacpp", "mlx"].includes(provider) && providerConfig?.model) {
+      return {};
+    }
+
     throw RequestError.authRequired({
       message: 'Please run `autohand --setup` or `autohand login` in your terminal.',
     });

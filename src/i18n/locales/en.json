@@ -672,6 +672,7 @@
     "llmgateway": "LLM Gateway",
     "azure": "Azure OpenAI",
     "zai": "Z.ai",
+    "github-copilot": "GitHub Copilot",
     "openaiAuth": {
       "chooseTitle": "Choose how to connect OpenAI",
       "apiKeyLabel": "Use API key",
@@ -697,7 +698,8 @@
       "mlx": "Local - Optimized for Apple Silicon Macs",
       "llmgateway": "Cloud - Unified API for multiple LLM providers",
       "azure": "Cloud - Azure OpenAI Service (enterprise)",
-      "zai": "Cloud - Z.ai GLM models (glm-4.5, cogview, etc.)"
+      "zai": "Cloud - Z.ai GLM models (glm-4.5, cogview, etc.)",
+      "github-copilot": "Cloud - Use your GitHub Copilot subscription via the Copilot SDK"
     },
     "config": {
       "chooseProvider": "Choose an LLM provider",
@@ -782,6 +784,9 @@
       "zai": {
         "title": "Z.ai Configuration",
         "apiKeyUrl": "https://z.ai/api-keys"
+      },
+      "github-copilot": {
+        "title": "GitHub Copilot Configuration"
       },
       "azure": {
         "title": "Azure OpenAI Configuration",

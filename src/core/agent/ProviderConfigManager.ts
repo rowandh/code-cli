@@ -31,6 +31,7 @@ import type {
   ReasoningEffort,
   OpenAIAuthMode,
   OpenAISettings,
+  GitHubCopilotSettings,
 } from "../../types.js";
 import type { LLMProvider } from "../../providers/LLMProvider.js";
 import type { TelemetryManager } from "../../telemetry/TelemetryManager.js";
@@ -86,7 +87,9 @@ export class ProviderConfigManager {
             : "";
         // Add hosted indicator for cloud providers
         const hostedNote =
-          ["openrouter", "openai", "llmgateway", "azure", "zai"].includes(name)
+          [
+            "openrouter", "openai", "llmgateway", "azure", "zai", "github-copilot"
+          ].includes(name)
             ? chalk.gray(" (" + t("providers.config.hosted") + ")")
             : "";
         return {
@@ -162,6 +165,10 @@ export class ProviderConfigManager {
       }
       return !!openAIConfig.apiKey && openAIConfig.apiKey !== "replace-me";
     }
+    if (provider === "github-copilot") {
+      const copilotConfig = config as GitHubCopilotSettings;
+      return !!copilotConfig.model && (!!copilotConfig.githubToken || copilotConfig.useLoggedInUser !== false);
+    }
 
     if (
       provider === "openrouter" ||
@@ -203,6 +210,9 @@ export class ProviderConfigManager {
         break;
       case "zai":
         await this.configureZai();
+        break;
+      case "github-copilot":
+        await this.configureGitHubCopilot();
         break;
     }
   }
@@ -1046,6 +1056,40 @@ export class ProviderConfigManager {
   }
 
   /**
+   * Configure GitHub Copilot provider (SDK auth + model)
+   */
+  private async configureGitHubCopilot(): Promise<void> {
+    const model = await showInput({
+      title: t("providers.config.enterModelId"),
+      defaultValue: "claude-sonnet-4.5",
+      validate: (val: string) => (val?.trim() ? true : "Model is required"),
+    });
+
+    if (!model) {
+      console.log(chalk.gray("\n" + t("providers.config.cancelled")));
+      return;
+    }
+
+    this.runtime.config["github-copilot"] = {
+      model: model.trim(),
+      useLoggedInUser: true,
+    };
+    this.runtime.config.provider = "github-copilot";
+    this.runtime.options.model = model.trim();
+    await saveConfig(this.runtime.config);
+    this.resetLlmClient("github-copilot", model.trim());
+
+    console.log(
+      chalk.green(
+        "\n✓ " +
+          t("providers.config.configuredSuccessfully", {
+            provider: t("providers.github-copilot"),
+          }),
+      ),
+    );
+  }
+
+  /**
    * Configure Z.ai provider (API key + model)
    */
   private async configureZai(): Promise<void> {
@@ -1687,6 +1731,9 @@ export class ProviderConfigManager {
       openrouter:
         this.runtime.config.openrouter ??
         (this.runtime.config.openrouter = { apiKey: "", model }),
+      "github-copilot":
+        this.runtime.config["github-copilot"] ??
+        (this.runtime.config["github-copilot"] = { model, useLoggedInUser: true }),
       ollama:
         this.runtime.config.ollama ?? (this.runtime.config.ollama = { model }),
       llamacpp:

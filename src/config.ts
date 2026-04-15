@@ -13,6 +13,7 @@ import type {
   ProviderSettings,
   AzureSettings,
   OpenAISettings,
+  GitHubCopilotSettings,
 } from "./types.js";
 import { AUTOHAND_FILES } from "./constants.js";
 import { autoInitTheme, themeExists } from "./ui/theme/index.js";
@@ -293,6 +294,7 @@ function isModernConfig(
     typeof (config as AutohandConfig).ollama === "object" ||
     typeof (config as AutohandConfig).llamacpp === "object" ||
     typeof (config as AutohandConfig).openai === "object" ||
+    typeof (config as AutohandConfig)["github-copilot"] === "object" ||
     typeof (config as AutohandConfig).mlx === "object" ||
     typeof (config as AutohandConfig).azure === "object" ||
     typeof (config as AutohandConfig).zai === "object"
@@ -444,6 +446,7 @@ export function getProviderConfig(
     ollama: config.ollama,
     llamacpp: config.llamacpp,
     openai: config.openai,
+    "github-copilot": config["github-copilot"],
     mlx: config.mlx,
     llmgateway: config.llmgateway,
     azure: config.azure,
@@ -474,6 +477,22 @@ export function getProviderConfig(
         return null;
       }
     }
+  } else if (chosen === "github-copilot") {
+    const copilotEntry = entry as GitHubCopilotSettings;
+    if (!copilotEntry.model) {
+      return null;
+    }
+
+    if (!copilotEntry.githubToken && copilotEntry.useLoggedInUser === false) {
+      return null;
+    }
+
+    const normalizedCopilotEntry: GitHubCopilotSettings = {
+      ...copilotEntry,
+      useLoggedInUser: copilotEntry.useLoggedInUser ?? true,
+    };
+
+    return normalizedCopilotEntry;
   } else if (
     chosen === "openrouter" ||
     chosen === "llmgateway" ||

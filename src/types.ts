@@ -29,7 +29,7 @@ type Primitive = string | number | boolean | null;
 
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
 
-export type ProviderName = 'openrouter' | 'ollama' | 'llamacpp' | 'openai' | 'mlx' | 'llmgateway' | 'azure' | 'zai';
+export type ProviderName = 'openrouter' | 'ollama' | 'llamacpp' | 'openai' | 'mlx' | 'llmgateway' | 'azure' | 'zai' | 'github-copilot';
 
 export type AzureAuthMethod = 'api-key' | 'entra-id' | 'managed-identity';
 export type OpenAIAuthMode = 'api-key' | 'chatgpt';
@@ -65,6 +65,17 @@ export interface OpenAIChatGPTAuth {
 export interface OpenAISettings extends ProviderSettings {
   authMode?: OpenAIAuthMode;
   chatgptAuth?: OpenAIChatGPTAuth;
+}
+
+export interface GitHubCopilotSettings extends ProviderSettings {
+  /** Optional GitHub token override for Copilot SDK auth */
+  githubToken?: string;
+  /** Use the logged-in GitHub/Copilot user when no token is provided (default: true) */
+  useLoggedInUser?: boolean;
+  /** Optional config directory for Copilot SDK state */
+  configDir?: string;
+  /** Optional working directory for Copilot SDK sessions */
+  workingDirectory?: string;
 }
 
 export interface AzureSettings extends ProviderSettings {
@@ -556,6 +567,7 @@ export interface AutohandConfig {
   ollama?: ProviderSettings;
   llamacpp?: ProviderSettings;
   openai?: OpenAISettings;
+  'github-copilot'?: GitHubCopilotSettings;
   mlx?: ProviderSettings;
   llmgateway?: LLMGatewaySettings;
   /** Azure OpenAI settings */

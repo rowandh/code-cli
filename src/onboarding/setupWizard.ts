@@ -913,6 +913,11 @@ export class SetupWizard {
           baseUrl: this.getDefaultBaseUrl('openai'),
           ...(this.state.reasoningEffort !== undefined && { reasoningEffort: this.state.reasoningEffort })
         };
+      } else if (this.state.provider === 'github-copilot') {
+        (config as any)[this.state.provider] = {
+          model: this.state.model ?? this.getDefaultModel('github-copilot'),
+          useLoggedInUser: true
+        };
       } else if (this.requiresApiKey(this.state.provider)) {
         (config as any)[this.state.provider] = {
           apiKey: this.state.apiKey,
@@ -1678,7 +1683,8 @@ export class SetupWizard {
       mlx: 'mlx-community/Llama-3.2-3B-Instruct-4bit',
       llmgateway: 'gpt-4o',
       azure: 'gpt-5.3-codex',
-      zai: 'glm-4.5'
+      zai: 'glm-4.5',
+      'github-copilot': 'claude-sonnet-4.5'
     };
     return defaults[provider] || '';
   }
@@ -1692,7 +1698,8 @@ export class SetupWizard {
       mlx: 'http://localhost:8080',
       llmgateway: 'https://api.llmgateway.io/v1',
       azure: 'https://{resourceName}.openai.azure.com',
-      zai: ZAI_DEFAULT_BASE_URL
+      zai: ZAI_DEFAULT_BASE_URL,
+      'github-copilot': ''
     };
     return urls[provider] || '';
   }

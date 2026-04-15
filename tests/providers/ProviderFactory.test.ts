@@ -19,7 +19,7 @@ describe("ProviderFactory", () => {
   });
 
   describe("getProviderNames()", () => {
-    it("should always include openrouter, ollama, openai, llamacpp, llmgateway, azure, zai", () => {
+    it("should always include openrouter, ollama, openai, llamacpp, llmgateway, azure, zai, github-copilot", () => {
       const providers = ProviderFactory.getProviderNames();
 
       expect(providers).toContain("openrouter");
@@ -52,6 +52,7 @@ describe("ProviderFactory", () => {
         "llmgateway",
         "azure",
         "zai",
+        "github-copilot",
       ]);
     });
   });
@@ -149,6 +150,18 @@ describe("ProviderFactory", () => {
 
       expect(provider.getName()).toBe("unconfigured");
     });
+    it("should create GitHubCopilotProvider when github-copilot is configured", () => {
+      const config: AutohandConfig = {
+        provider: "github-copilot",
+        "github-copilot": {
+          model: "claude-sonnet-4.5",
+        },
+      };
+
+      const provider = ProviderFactory.create(config);
+
+      expect(provider.getName()).toBe("github-copilot");
+    });
 
     it("should default to openrouter when no provider specified", () => {
       const config: AutohandConfig = {
@@ -191,6 +204,9 @@ describe("ProviderFactory", () => {
 
     it("should return true for zai", () => {
       expect(ProviderFactory.isValidProvider("zai")).toBe(true);
+    });
+    it("should return true for github-copilot", () => {
+      expect(ProviderFactory.isValidProvider("github-copilot")).toBe(true);
     });
 
     it("should return false for invalid provider", () => {
