@@ -152,8 +152,8 @@ export class GitHubCopilotProvider implements LLMProvider {
 
     return [
       "You are the GitHub Copilot backend for Autohand. Reply with a single JSON object only. No markdown fences, no commentary.",
-      "JSON schema: {\"content\": string, \"toolCalls\"?: Array<{\"id\": string, \"type\": \"function\", \"function\": {\"name\": string, \"arguments\": string}}>, \"finishReason\"?: \"stop\" | \"tool_calls\" | \"length\" | \"content_filter\"}.",
-      "When requesting a tool, set finishReason to tool_calls and put the tool arguments in function.arguments as a JSON string.",
+      'Use Autohand response schema exactly: {"thought": string, "toolCalls": Array<{"tool": string, "args": object}>, "finalResponse"?: string}.',
+      "If no tools are needed, set toolCalls to [] and provide finalResponse directly. If tools are needed, use toolCalls and omit finalResponse until the task is complete.",
       JSON.stringify(payload),
     ].join("\n\n");
   }
@@ -175,6 +175,16 @@ export class GitHubCopilotProvider implements LLMProvider {
       };
     }
 
+    if (this.isAutohandPayload(parsed)) {
+      const normalizedContent = JSON.stringify(this.normalizeAutohandPayload(parsed));
+      const toolCalls = this.normalizeAutohandToolCalls(parsed.toolCalls);
+      return {
+        content: normalizedContent,
+        finishReason: toolCalls?.length ? "tool_calls" : "stop",
+        toolCalls,
+      };
+    }
+
     return {
       content: typeof parsed.content === "string" ? parsed.content : "",
       finishReason: this.normalizeFinishReason(parsed.finishReason),
@@ -182,6 +192,73 @@ export class GitHubCopilotProvider implements LLMProvider {
     };
   }
 
+  private isAutohandPayload(parsed: Record<string, unknown>): boolean {
+    return (
+      typeof parsed.thought === "string" ||
+      typeof parsed.finalResponse === "string" ||
+      typeof parsed.response === "string" ||
+      Array.isArray(parsed.toolCalls)
+    );
+  }
+
+  private normalizeAutohandPayload(parsed: Record<string, unknown>): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+
+    if (typeof parsed.thought === "string") {
+      payload.thought = parsed.thought;
+    }
+
+    if (Array.isArray(parsed.toolCalls)) {
+      payload.toolCalls = parsed.toolCalls;
+    }
+
+    if (typeof parsed.finalResponse === "string") {
+      payload.finalResponse = parsed.finalResponse;
+    } else if (typeof parsed.response === "string") {
+      payload.finalResponse = parsed.response;
+    }
+
+    return payload;
+  }
+
+  private normalizeAutohandToolCalls(value: unknown): LLMToolCall[] | undefined {
+    if (!Array.isArray(value)) {
+      return undefined;
+    }
+
+    const toolCalls = value.flatMap((toolCall, index) => {
+      if (!toolCall || typeof toolCall !== "object") {
+        return [];
+      }
+
+      const candidate = toolCall as {
+        args?: unknown;
+        id?: unknown;
+        tool?: unknown;
+      };
+
+      if (typeof candidate.tool !== "string") {
+        return [];
+      }
+
+      const args = candidate.args && typeof candidate.args === "object"
+        ? candidate.args
+        : {};
+
+      return [
+        {
+          id: typeof candidate.id === "string" ? candidate.id : "tool_call_" + (index + 1),
+          type: "function" as const,
+          function: {
+            name: candidate.tool,
+            arguments: JSON.stringify(args),
+          },
+        },
+      ];
+    });
+
+    return toolCalls.length > 0 ? toolCalls : undefined;
+  }
   private parseJsonEnvelope(content: string): Record<string, unknown> | null {
     const trimmed = content.trim();
     const candidates = [trimmed];

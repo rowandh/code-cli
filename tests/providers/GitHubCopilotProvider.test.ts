@@ -77,20 +77,15 @@ describe("GitHubCopilotProvider", () => {
     );
   });
 
-  it("parses JSON envelope responses into tool calls", async () => {
+  it("passes through Autohand structured JSON and adapts tool calls", async () => {
     mockSendAndWait.mockResolvedValue({
       data: {
         content: JSON.stringify({
-          content: "I can do that.",
-          finishReason: "tool_calls",
+          thought: "Need to write the file.",
           toolCalls: [
             {
-              id: "call_1",
-              type: "function",
-              function: {
-                name: "write_file",
-                arguments: JSON.stringify({ path: "src/test.ts" }),
-              },
+              tool: "write_file",
+              args: { path: "src/test.ts", content: "hello" },
             },
           ],
         }),
@@ -117,15 +112,25 @@ describe("GitHubCopilotProvider", () => {
       ],
     });
 
-    expect(response.content).toBe("I can do that.");
+    expect(response.content).toBe(
+      JSON.stringify({
+        thought: "Need to write the file.",
+        toolCalls: [
+          {
+            tool: "write_file",
+            args: { path: "src/test.ts", content: "hello" },
+          },
+        ],
+      }),
+    );
     expect(response.finishReason).toBe("tool_calls");
     expect(response.toolCalls).toEqual([
       {
-        id: "call_1",
+        id: "tool_call_1",
         type: "function",
         function: {
           name: "write_file",
-          arguments: JSON.stringify({ path: "src/test.ts" }),
+          arguments: JSON.stringify({ path: "src/test.ts", content: "hello" }),
         },
       },
     ]);
@@ -138,6 +143,34 @@ describe("GitHubCopilotProvider", () => {
     );
     expect(mockDisconnect).toHaveBeenCalled();
     expect(mockStop).toHaveBeenCalled();
+  });
+
+  it("passes through Autohand structured final responses", async () => {
+    mockSendAndWait.mockResolvedValue({
+      data: {
+        content: JSON.stringify({
+          thought: "Done.",
+          finalResponse: "All set.",
+          toolCalls: [],
+        }),
+      },
+    });
+
+    const provider = new GitHubCopilotProvider({
+      model: "gpt-5",
+    });
+
+    const response = await provider.complete({
+      messages: [{ role: "user", content: "Say hi" }],
+    });
+
+    expect(JSON.parse(response.content)).toEqual({
+      thought: "Done.",
+      finalResponse: "All set.",
+      toolCalls: [],
+    });
+    expect(response.toolCalls).toBeUndefined();
+    expect(response.finishReason).toBe("stop");
   });
 
   it("falls back to plain text when the assistant response is not valid JSON", async () => {
