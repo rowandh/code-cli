@@ -24,6 +24,7 @@ const {
   mockFetch,
   mockProbeLlamaCppEnvironment,
   mockInstallLlamaCpp,
+  mockGitHubCopilotListModels,
 } = vi.hoisted(() => ({
   mockShowModal: vi.fn(),
   mockShowInput: vi.fn(),
@@ -39,6 +40,7 @@ const {
   mockDetectLocale: vi.fn(),
   mockFetch: vi.fn(),
   mockProbeLlamaCppEnvironment: vi.fn(),
+  mockGitHubCopilotListModels: vi.fn(),
   mockInstallLlamaCpp: vi.fn(),
 }));
 
@@ -107,6 +109,11 @@ vi.mock("../../src/providers/llamaCppSetup.js", () => ({
   installLlamaCpp: mockInstallLlamaCpp,
 }));
 
+vi.mock("../../src/providers/GitHubCopilotProvider.js", () => ({
+  GitHubCopilotProvider: vi.fn().mockImplementation(() => ({
+    listModels: mockGitHubCopilotListModels,
+  })),
+}));
 // Mock 'open' package for browser opening
 vi.mock("open", () => ({
   default: vi.fn().mockResolvedValue(undefined),
@@ -488,8 +495,43 @@ describe("SetupWizard", () => {
         }),
       );
     });
-  });
 
+    it("should support GitHub Copilot in onboarding with model selection modal", async () => {
+      mockGitHubCopilotListModels.mockResolvedValue([
+        "gpt-5",
+        "claude-sonnet-4.5",
+        "o4-mini",
+      ]);
+
+      mockShowModal
+        .mockResolvedValueOnce({ value: "en" }) // language
+        .mockResolvedValueOnce({ value: "github-copilot" }) // provider
+        .mockResolvedValueOnce({ value: "gpt-5" }) // model
+        .mockResolvedValueOnce({ value: "interactive" }); // permissions
+
+      mockShowConfirm
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const wizard = new SetupWizard(testWorkspace);
+      const result = await wizard.run({ skipWelcome: true });
+
+      expect(result.success).toBe(true);
+      expect(result.config.provider).toBe("github-copilot");
+      expect(result.config["github-copilot"]).toEqual({
+        model: "gpt-5",
+        useLoggedInUser: true,
+      });
+      expect(mockShowInput).not.toHaveBeenCalled();
+      expect(mockShowPassword).not.toHaveBeenCalled();
+    });
+  });
   describe("API Key Handling", () => {
     it("should save API key for OpenRouter", async () => {
       const wizard = new SetupWizard(testWorkspace);

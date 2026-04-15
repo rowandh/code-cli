@@ -14,6 +14,7 @@ import { join } from 'path';
 import type { AutohandConfig, LoadedConfig, ProviderName, AzureSettings, AzureAuthMethod, PermissionMode, SearchProvider, ReasoningEffort, OpenAIAuthMode, OpenAIChatGPTAuth, OpenAISettings } from '../types.js';
 import { getProviderConfig } from '../config.js';
 import { ProviderFactory } from '../providers/ProviderFactory.js';
+import { GitHubCopilotProvider } from '../providers/GitHubCopilotProvider.js';
 import { ZAI_MODELS, ZAI_DEFAULT_BASE_URL } from '../providers/ZaiProvider.js';
 import { authenticateOpenAIChatGPT, isChatGPTAuthExpired } from '../providers/openaiAuth.js';
 import { installLlamaCpp, probeLlamaCppEnvironment } from '../providers/llamaCppSetup.js';
@@ -521,6 +522,41 @@ export class SetupWizard {
 
       this.state.model = result.value as string;
       return this.state.model;
+    }
+    if (provider === 'github-copilot') {
+      try {
+        const existingSettings = this.existingConfig?.['github-copilot'];
+        const copilotProvider = new GitHubCopilotProvider({
+          ...existingSettings,
+          model: existingSettings?.model ?? defaultModel,
+          useLoggedInUser: existingSettings?.useLoggedInUser ?? true,
+        });
+        const models = Array.from(
+          new Set((await copilotProvider.listModels()).filter((model) => Boolean(model))),
+        );
+
+        if (models.length > 0) {
+          const options: ModalOption[] = models.map((modelName) => ({
+            label: modelName,
+            value: modelName,
+          }));
+          const defaultIndex = models.indexOf(defaultModel);
+          const result = await showModal({
+            title: t('providers.config.selectModel'),
+            options,
+            initialIndex: defaultIndex >= 0 ? defaultIndex : 0,
+          });
+
+          if (!result) {
+            return null;
+          }
+
+          this.state.model = result.value as string;
+          return this.state.model;
+        }
+      } catch {
+        // Fall back to manual input when model discovery fails.
+      }
     }
 
     // For simplicity, just use input with default

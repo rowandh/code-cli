@@ -12,6 +12,7 @@ var mockShowPassword = vi.fn();
 var mockSaveConfig = vi.fn();
 var mockEnsureOpenAIChatGPTAuth = vi.fn();
 var mockAuthenticateOpenAIChatGPT = vi.fn();
+var mockGitHubCopilotListModels = vi.fn();
 
 vi.mock("../../../src/ui/ink/components/Modal.js", () => ({
   showModal: mockShowModal,
@@ -33,6 +34,11 @@ vi.mock("../../../src/providers/openaiAuth.js", () => ({
   ensureOpenAIChatGPTAuth: mockEnsureOpenAIChatGPTAuth,
   authenticateOpenAIChatGPT: mockAuthenticateOpenAIChatGPT,
   isChatGPTAuthExpired: vi.fn(() => false),
+}));
+vi.mock("../../../src/providers/GitHubCopilotProvider.js", () => ({
+  GitHubCopilotProvider: vi.fn().mockImplementation(() => ({
+    listModels: mockGitHubCopilotListModels,
+  })),
 }));
 
 vi.mock("../../../src/i18n/index.js", () => ({
@@ -174,6 +180,38 @@ describe("ProviderConfigManager openai auth mode", () => {
       model: "glm-4.5-air-2504",
     });
     expect(runtime.config.provider).toBe("zai");
+    expect(mockSaveConfig).toHaveBeenCalledOnce();
+  });
+
+  it("configures GitHub Copilot with fetched model options", async () => {
+    (manager as any).resetLlmClient = vi.fn();
+    mockGitHubCopilotListModels.mockResolvedValue([
+      "gpt-5",
+      "claude-sonnet-4.5",
+      "o4-mini",
+    ]);
+    mockShowModal.mockResolvedValueOnce({ value: "gpt-5" });
+
+    await (manager as any).configureGitHubCopilot();
+
+    expect(mockShowModal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "providers.config.selectModel",
+        initialIndex: 1,
+        options: [
+          { label: "gpt-5", value: "gpt-5" },
+          { label: "claude-sonnet-4.5", value: "claude-sonnet-4.5" },
+          { label: "o4-mini", value: "o4-mini" },
+        ],
+      }),
+    );
+    expect(mockShowInput).not.toHaveBeenCalled();
+    expect(runtime.config["github-copilot"]).toEqual({
+      model: "gpt-5",
+      useLoggedInUser: true,
+    });
+    expect(runtime.config.provider).toBe("github-copilot");
+    expect(runtime.options.model).toBe("gpt-5");
     expect(mockSaveConfig).toHaveBeenCalledOnce();
   });
 

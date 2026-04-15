@@ -14,6 +14,7 @@ import {
   type ModalOption,
 } from "../../ui/ink/components/Modal.js";
 import { ProviderFactory } from "../../providers/ProviderFactory.js";
+import { GitHubCopilotProvider } from "../../providers/GitHubCopilotProvider.js";
 import { OPENAI_MODELS } from "../../providers/OpenAIProvider.js";
 import {
   installLlamaCpp,
@@ -996,6 +997,23 @@ export class ProviderConfigManager {
         return;
       }
 
+      if (provider === "github-copilot") {
+        const model = await this.promptGitHubCopilotModelSelection(
+          currentModel || "claude-sonnet-4.5",
+          t("providers.config.enterModelIdToUse"),
+        );
+
+        if (!model) {
+          console.log(
+            chalk.gray("\n" + t("providers.config.modelChangeCancelled")),
+          );
+          return;
+        }
+
+        await this.applyModelChange(provider, model, currentModel);
+        return;
+      }
+
       // For Ollama, try to fetch available models
       if (provider === "ollama" && currentSettings?.baseUrl) {
         try {
@@ -1055,15 +1073,56 @@ export class ProviderConfigManager {
     }
   }
 
+  private async promptGitHubCopilotModelSelection(
+    defaultModel: string,
+    inputTitle: string,
+  ): Promise<string | null> {
+    try {
+      const existingSettings = this.runtime.config["github-copilot"];
+      const provider = new GitHubCopilotProvider({
+        ...existingSettings,
+        model: existingSettings?.model ?? defaultModel,
+        useLoggedInUser: existingSettings?.useLoggedInUser ?? true,
+      });
+      const models = Array.from(
+        new Set((await provider.listModels()).filter((model) => Boolean(model))),
+      );
+
+      if (models.length > 0) {
+        const options: ModalOption[] = models.map((name) => ({
+          label: name,
+          value: name,
+        }));
+        const currentIndex = models.indexOf(defaultModel);
+        const result = await showModal({
+          title: t("providers.config.selectModel"),
+          options,
+          initialIndex: currentIndex >= 0 ? currentIndex : 0,
+        });
+
+        return result ? (result.value as string) : null;
+      }
+    } catch {
+      // Fall back to manual input when model discovery fails.
+    }
+
+    const model = await showInput({
+      title: inputTitle,
+      defaultValue: defaultModel,
+      validate: (val: string) => (val?.trim() ? true : "Model is required"),
+    });
+
+    return model ? model.trim() : null;
+  }
+
   /**
    * Configure GitHub Copilot provider (SDK auth + model)
    */
   private async configureGitHubCopilot(): Promise<void> {
-    const model = await showInput({
-      title: t("providers.config.enterModelId"),
-      defaultValue: "claude-sonnet-4.5",
-      validate: (val: string) => (val?.trim() ? true : "Model is required"),
-    });
+    const model = await this.promptGitHubCopilotModelSelection(
+      "claude-sonnet-4.5",
+      t("providers.config.enterModelId"),
+    );
 
     if (!model) {
       console.log(chalk.gray("\n" + t("providers.config.cancelled")));
@@ -1071,13 +1130,14 @@ export class ProviderConfigManager {
     }
 
     this.runtime.config["github-copilot"] = {
-      model: model.trim(),
-      useLoggedInUser: true,
+      ...(this.runtime.config["github-copilot"] ?? {}),
+      model,
+      useLoggedInUser: this.runtime.config["github-copilot"]?.useLoggedInUser ?? true,
     };
     this.runtime.config.provider = "github-copilot";
-    this.runtime.options.model = model.trim();
+    this.runtime.options.model = model;
     await saveConfig(this.runtime.config);
-    this.resetLlmClient("github-copilot", model.trim());
+    this.resetLlmClient("github-copilot", model);
 
     console.log(
       chalk.green(
