@@ -23,6 +23,7 @@ import type {
   ToolExecutionResult,
 } from '../../types.js';
 import type { LLMProvider } from '../../providers/LLMProvider.js';
+import type { ToolMessageOutcome } from './AgentToolOutputRuntime.js';
 import type { MemoryManager } from '../../memory/MemoryManager.js';
 import type { AutoReportManager } from '../../reporting/AutoReportManager.js';
 import type { ProjectManager } from '../../session/ProjectManager.js';
@@ -137,7 +138,7 @@ export interface AgentReactLoopHost {
   handleSmartContextCrop(call: ToolCallRequest): Promise<string>;
   isContextOverflowError(errorOrMessage: Error | string): boolean;
   saveAssistantMessage(content: string, toolCalls?: ToolCallRequest[]): Promise<void>;
-  saveToolMessage(name: AgentAction['type'], content: string, toolCallId?: string): Promise<void>;
+  saveToolMessage(name: AgentAction['type'], content: string, toolCallId?: string, outcome?: ToolMessageOutcome): Promise<void>;
   setComposerFinalResponse(response: string): void;
   setComposerIdle(): void;
   setSpinnerStatus(status: string): void;
@@ -717,7 +718,7 @@ export async function runAgentReactLoop(host: AgentReactLoopHost, abortControlle
               content,
               tool_call_id: call.id
             });
-            await host.saveToolMessage('smart_context_cropper', content, call.id);
+            await host.saveToolMessage('smart_context_cropper', content, call.id, { success: true });
             host.updateContextUsage(host.conversation.history(), tools);
             outputLines.push(`${chalk.cyan('✂ smart_context_cropper')}`);
             outputLines.push(chalk.gray(content));
@@ -829,7 +830,14 @@ export async function runAgentReactLoop(host: AgentReactLoopHost, abortControlle
               content,
               tool_call_id: otherCalls[i]?.id
             });
-            await host.saveToolMessage(result.tool, content, otherCalls[i]?.id);
+            await host.saveToolMessage(
+              result.tool,
+              content,
+              otherCalls[i]?.id,
+              result.success
+                ? { success: true }
+                : { success: false, kind: result.kind, exitCode: result.exitCode }
+            );
           }
           if (results.some((result) => result.success && result.tool === 'create_meta_tool')) {
             allTools = await refreshRuntimeTools();

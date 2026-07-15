@@ -1,5 +1,12 @@
 import type { SessionMessage } from '../../session/types.js';
-import type { ToolOutputChunk } from '../../types.js';
+import type { ToolFailureKind, ToolOutputChunk } from '../../types.js';
+
+/** Outcome of the tool call a persisted tool message belongs to. */
+export interface ToolMessageOutcome {
+  success: boolean;
+  kind?: ToolFailureKind;
+  exitCode?: number | null;
+}
 
 export interface AgentToolOutputRuntimeHost {
   sessionManager: {
@@ -58,7 +65,8 @@ export async function saveAgentToolMessage(
   host: AgentToolOutputRuntimeHost,
   name: string,
   content: string,
-  toolCallId?: string
+  toolCallId?: string,
+  outcome?: ToolMessageOutcome
 ): Promise<void> {
   const session = host.sessionManager.getCurrentSession();
   if (!session) return;
@@ -71,6 +79,13 @@ export async function saveAgentToolMessage(
     name,
     timestamp: new Date().toISOString(),
     tool_call_id: toolCallId,
+    _meta: outcome
+      ? {
+          success: outcome.success,
+          ...(outcome.kind !== undefined ? { kind: outcome.kind } : {}),
+          ...(outcome.exitCode !== undefined ? { exitCode: outcome.exitCode } : {}),
+        }
+      : undefined,
   };
   await session.append(message);
 }

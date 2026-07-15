@@ -200,6 +200,7 @@ import {
   queueAgentToolMessageChunk,
   saveAgentToolMessage,
   type AgentToolOutputRuntimeHost,
+  type ToolMessageOutcome,
 } from './agent/AgentToolOutputRuntime.js';
 import {
   createAgentInstructionsFile,
@@ -835,12 +836,18 @@ export class AutohandAgent {
     );
   }
 
-  private async saveToolMessage(name: string, content: string, toolCallId?: string): Promise<void> {
+  private async saveToolMessage(
+    name: string,
+    content: string,
+    toolCallId?: string,
+    outcome?: ToolMessageOutcome
+  ): Promise<void> {
     return saveAgentToolMessage(
       this as unknown as AgentToolOutputRuntimeHost,
       name,
       content,
-      toolCallId
+      toolCallId,
+      outcome
     );
   }
 
@@ -921,7 +928,7 @@ export class AutohandAgent {
       handleSmartContextCrop: (call) => agent.handleSmartContextCrop(call),
       isContextOverflowError: (errorOrMessage) => agent.isContextOverflowError(errorOrMessage),
       saveAssistantMessage: (content, toolCalls) => agent.saveAssistantMessage(content, toolCalls),
-      saveToolMessage: (name, content, toolCallId) => agent.saveToolMessage(name, content, toolCallId),
+      saveToolMessage: (name, content, toolCallId, outcome) => agent.saveToolMessage(name, content, toolCallId, outcome),
       setComposerFinalResponse: (response) => agent.setComposerFinalResponse(response),
       setComposerIdle: () => agent.setComposerIdle(),
       setSpinnerStatus: (status) => agent.setSpinnerStatus(status),
